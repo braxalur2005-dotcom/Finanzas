@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Gestión Financiera Integrado</title>
+    <!-- Carga de Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de Chart.js CDN para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Gris claro corporativo */
+        }
+        /* Estilos base para la aplicación */
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .sidebar-item:hover {
+            background-color: #1e3a8a; /* Azul oscuro más formal */
+        }
+        .sidebar-item.active {
+            background-color: #1e3a8a; /* Azul oscuro más formal */
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.4);
+        }
+        .sidebar-item-text {
+            margin-left: 0.75rem;
+            font-weight: 600;
+        }
+        .card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Sombra más pronunciada */
+            transition: all 0.3s;
+        }
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        /* Animación de carga */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Íconos SVG (simulando Lucide/Heroicons) -->
+    <script>
+        const getIcon = (name, className = 'w-5 h-5') => {
+            const icons = {
+                Home: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+                Dashboard: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>`,
+                Transactions: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+                Portfolio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M20 9v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9"/><path d="M10 16h4"/><path d="M12 12V6"/><path d="M16.5 7.5l-4.5-5-4.5 5"/></svg>`,
+                Logout: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+                Users: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+                Utensils: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M3 2v7c0 1.1 0.9 2 2 2h4l-2 7h2l1-4h1l1 4h2l-2-7h4c1.1 0 2-0.9 2-2V2H3z"/></svg>`,
+                Car: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M19 17h-1"/><path d="M3 17h1"/><path d="m19 17 2.3-4.1"/><path d="m3 17-2.3-4.1"/><path d="M7.7 17h8.6"/><path d="M22 13.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7.5"/><path d="M12 17a2.5 2.5 0 0 0 0 5"/><path d="M2 13.5v-2a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2"/></svg>`,
+                ShoppingCart: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><circle cx="8" cy="20" r="1"/><circle cx="19" cy="20" r="1"/><path d="M3.8 3.8h17.4l-3.3 8.3c-0.3 0.9-1.2 1.5-2.2 1.5H9.4c-0.9 0-1.7-0.6-2.2-1.5L2 4"/></svg>`,
+                HeartHandshake: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path d="M12 17l4-4 4 4"/></svg>`,
+                Zap: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+                CreditCard: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`,
+                DollarSign: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+                PiggyBank: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M19 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><path d="M14 2h2"/><path d="M8 2h2"/><path d="M12 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>`,
+                TrendingUp: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><polyline points="18 10 22 6 13 14 9 9 2 16"/><polyline points="13 10 22 10 22 6"/></svg>`,
+                AlertTriangle: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${className}"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+            };
+            return icons[name] || icons.Dashboard;
+        };
+    </script>
+    
+    <!-- Carga de Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, addDoc, onSnapshot, collection, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Exponer funciones de Firebase al scope global
+        window.firebase = {
+            initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut,
+            getFirestore, doc, setDoc, addDoc, onSnapshot, collection, query, where, serverTimestamp, deleteDoc
+        };
+
+        window.initializeFirebase = async () => {
+            try {
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+                const app = window.firebase.initializeApp(firebaseConfig);
+                const db = window.firebase.getFirestore(app);
+                const auth = window.firebase.getAuth(app);
+                window.db = db;
+                window.auth = auth;
+                window.appId = typeof __app_id !== 'undefined' ? __app_id : 'reporte-financiero-app';
+                
+                console.log("Firebase inicializado.");
+
+                window.firebase.onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        window.userId = user.uid;
+                        document.getElementById('user-id-display').textContent = `ID de Usuario: ${user.uid}`;
+                        document.getElementById('logout-button').classList.remove('hidden');
+                        document.getElementById('app-content').classList.remove('hidden');
+                        document.getElementById('auth-view').classList.add('hidden');
+                        window.attachDataListeners();
+                        window.renderView('Dashboard');
+                    } else {
+                        window.userId = null;
+                        document.getElementById('logout-button').classList.add('hidden');
+                        document.getElementById('app-content').classList.add('hidden');
+                        document.getElementById('auth-view').classList.remove('hidden');
+                        window.renderAuthView();
+                    }
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                });
+                
+                const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (initialAuthToken) {
+                    await window.firebase.signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await window.firebase.signInAnonymously(auth);
+                }
+
+            } catch (error) {
+                console.error("Error al inicializar Firebase o autenticar:", error);
+                document.getElementById('loading-spinner').innerHTML = `<div class="p-4 rounded-lg bg-red-100 text-red-700">${getIcon('AlertTriangle', 'w-6 h-6 inline-block mr-2')} Error de conectividad con el servicio.</div>`;
+            }
+        };
+
+        window.logout = async () => {
+            try {
+                await window.firebase.signOut(window.auth);
+                console.log("Sesión cerrada.");
+                window.renderAuthView();
+            } catch (error) {
+                console.error("Error al cerrar sesión:", error);
+            }
+        };
+
+        // --- Lógica de Datos Firestore ---
+        window.transactions = [];
+        window.portfolio = null;
+        window.dataLoading = true;
+
+        window.attachDataListeners = () => {
+            if (!window.db || !window.userId) return;
+
+            const transactionsPath = `artifacts/${window.appId}/users/${window.userId}/transactions`;
+            const portfolioDocRef = window.firebase.doc(window.db, `artifacts/${window.appId}/users/${window.userId}/settings/portfolio`);
+            
+            // 1. Listener de Transacciones
+            window.firebase.onSnapshot(window.firebase.query(window.firebase.collection(window.db, transactionsPath)), (snapshot) => {
+                window.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.dataLoading = false;
+                window.updateCurrentView();
+            }, (error) => {
+                console.error("Error al escuchar transacciones:", error);
+                window.dataLoading = false;
+                window.updateCurrentView();
+            });
+
+            // 2. Listener de Portafolio
+            window.firebase.onSnapshot(portfolioDocRef, (doc) => {
+                if (doc.exists()) {
+                    window.portfolio = doc.data();
+                } else {
+                    // Inicializar portafolio predeterminado
+                    window.portfolio = { riskProfile: 'Moderado', assets: [{ type: 'Acciones', value: 50000 }, { type: 'Bonos', value: 40000 }, { type: 'Efectivo', value: 10000 }] };
+                    window.firebase.setDoc(portfolioDocRef, window.portfolio); 
+                }
+                window.dataLoading = false;
+                window.updateCurrentView();
+            }, (error) => {
+                console.error("Error al escuchar portafolio:", error);
+                window.dataLoading = false;
+                window.updateCurrentView();
+            });
+        };
+
+        window.addTransaction = async (data) => {
+            if (!window.db || !window.userId) return;
+            try {
+                const transactionsPath = `artifacts/${window.appId}/users/${window.userId}/transactions`;
+                await window.firebase.addDoc(window.firebase.collection(window.db, transactionsPath), {
+                    ...data,
+                    userId: window.userId,
+                    createdAt: window.firebase.serverTimestamp(),
+                });
+                document.getElementById('add-transaction-form').reset();
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                window.showModal('Error', 'No se pudo guardar la transacción.');
+            }
+        };
+        
+        window.updatePortfolio = async (data) => {
+            if (!window.db || !window.userId) return;
+            try {
+                const portfolioDocRef = window.firebase.doc(window.db, `artifacts/${window.appId}/users/${window.userId}/settings/portfolio`);
+                await window.firebase.setDoc(portfolioDocRef, {
+                    ...data,
+                    userId: window.userId,
+                    updatedAt: window.firebase.serverTimestamp(),
+                }, { merge: true });
+                window.showModal('Confirmación', 'Portafolio actualizado con éxito.');
+            } catch (e) {
+                console.error("Error updating portfolio: ", e);
+                window.showModal('Error', 'No se pudo actualizar el portafolio.');
+            }
+        };
+
+        window.deleteTransaction = async (id) => {
+            if (!window.db || !window.userId) return;
+            try {
+                const docRef = window.firebase.doc(window.db, `artifacts/${window.appId}/users/${window.userId}/transactions`, id);
+                await window.firebase.deleteDoc(docRef);
+                window.showModal('Confirmación', 'Transacción eliminada con éxito.');
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+                window.showModal('Error', 'No se pudo eliminar la transacción.');
+            }
+        };
+
+        window.addEventListener('load', window.initializeFirebase);
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- MODAL DE MENSAJES -->
+    <div id="app-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+        <div class="card max-w-sm w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modal-title" class="text-xl font-bold text-gray-900"></h3>
+                <button onclick="window.closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <p id="modal-message" class="text-gray-600 mb-4"></p>
+            <div class="flex justify-end">
+                <button onclick="window.closeModal()" class="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium">
+                    Aceptar
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- CONTENEDOR PRINCIPAL DE LA APLICACIÓN -->
+    <div id="app-container" class="flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- BARRA LATERAL (SIDEBAR) -->
+        <div id="sidebar" class="bg-blue-900 text-white w-full lg:w-64 p-4 lg:p-6 shadow-2xl flex-shrink-0">
+            <div class="text-2xl font-extrabold mb-8 flex items-center">
+                <span class="mr-2 text-yellow-400" style="transform: translateY(-2px);">📊</span> Reporte Financiero
+            </div>
+            
+            <!-- Menú de navegación -->
+            <nav id="app-nav" class="space-y-2 hidden lg:block">
+                <div class="sidebar-item active" data-view="Dashboard" onclick="window.renderView('Dashboard')">
+                    ${getIcon('Dashboard')}
+                    <span class="sidebar-item-text">Resumen Ejecutivo</span>
+                </div>
+                <div class="sidebar-item" data-view="Transactions" onclick="window.renderView('Transactions')">
+                    ${getIcon('Transactions')}
+                    <span class="sidebar-item-text">Análisis de Flujo</span>
+                </div>
+                <div class="sidebar-item" data-view="Portfolio" onclick="window.renderView('Portfolio')">
+                    ${getIcon('Portfolio')}
+                    <span class="sidebar-item-text">Gestión de Activos</span>
+                </div>
+            </nav>
+
+            <!-- Botón de menú móvil -->
+            <button id="mobile-menu-button" class="lg:hidden w-full py-2 px-4 mb-4 bg-blue-800 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                Menú de Navegación
+            </button>
+            
+            <!-- Información de usuario y logout -->
+            <div class="mt-8 pt-4 border-t border-blue-700">
+                <p id="user-id-display" class="text-xs text-blue-300 truncate mb-2">Cargando...</p>
+                <button id="logout-button" onclick="window.logout()" class="w-full sidebar-item bg-blue-800 hover:bg-red-600 hidden">
+                    ${getIcon('Logout')}
+                    <span class="sidebar-item-text">Finalizar Sesión</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-grow p-4 md:p-8">
+            <header class="mb-6 pb-4 border-b border-gray-300">
+                <h1 id="current-view-title" class="text-3xl font-extrabold text-gray-900">Cargando Sistema...</h1>
+            </header>
+            
+            <!-- Spinner de carga inicial -->
+            <div id="loading-spinner" class="flex justify-center items-center h-48">
+                <div class="spinner border-blue-600 border-t-blue-200 w-10 h-10"></div>
+                <p class="text-lg text-blue-600 ml-3 font-medium">Inicializando sistema de gestión...</p>
+            </div>
+
+            <!-- Vista de Autenticación -->
+            <div id="auth-view" class="max-w-md mx-auto card hidden">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Acceso al Sistema</h2>
+                <p class="text-gray-600 mb-6">El sistema se autentica automáticamente para garantizar el acceso persistente a sus datos financieros personales.</p>
+                <p class="text-sm text-gray-500 mt-4 p-3 bg-gray-50 rounded-lg border">
+                    Utilizando el token de autenticación proporcionado por el entorno para la continuidad del servicio.
+                </p>
+            </div>
+
+            <!-- Contenido de la Aplicación -->
+            <div id="app-content" class="hidden">
+                <div id="main-content-area" class="space-y-8">
+                    <!-- Las vistas se renderizarán aquí -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- CONSTANTES ---
+        const CATEGORIES = {
+            Alimentacion: { icon: 'Utensils', color: '#ff6384' },
+            Vivienda: { icon: 'Home', color: '#36a2eb' },
+            Transporte: { icon: 'Car', color: '#ffce56' },
+            Entretenimiento: { icon: 'ShoppingCart', color: '#4bc0c0' },
+            Salud: { icon: 'HeartHandshake', color: '#9966ff' },
+            Servicios: { icon: 'Zap', color: '#ff9f40' },
+            Otros: { icon: 'CreditCard', color: '#c9cbcf' },
+        };
+
+        const RISK_PROFILES = {
+            Conservador: {
+                description: "Estrategia enfocada en la preservación del capital y la estabilidad. Baja tolerancia al riesgo.",
+                allocation: [
+                    { type: 'Bonos Gubernamentales', percentage: 70, color: '#4CAF50' },
+                    { type: 'Fondos de Baja Volatilidad', percentage: 20, color: '#2196F3' },
+                    { type: 'Reservas de Liquidez', percentage: 10, color: '#FF9800' }
+                ]
+            },
+            Moderado: {
+                description: "Búsqueda de un equilibrio entre crecimiento y riesgo. Incluye diversificación en renta variable y fija.",
+                allocation: [
+                    { type: 'Acciones de Mercado Estable', percentage: 50, color: '#2196F3' },
+                    { type: 'Bonos Corporativos', percentage: 40, color: '#4CAF50' },
+                    { type: 'Inversiones Alternativas', percentage: 10, color: '#795548' }
+                ]
+            },
+            Agresivo: {
+                description: "Objetivo de maximización del rendimiento a largo plazo, aceptando un alto nivel de volatilidad y riesgo.",
+                allocation: [
+                    { type: 'Acciones de Crecimiento (Growth)', percentage: 70, color: '#F44336' },
+                    { type: 'Activos de Alto Riesgo (e.g., Cripto)', percentage: 15, color: '#FFEB3B' },
+                    { type: 'Renta Fija Táctica', percentage: 15, color: '#4CAF50' }
+                ]
+            }
+        };
+        
+        window.CATEGORIES = CATEGORIES;
+        window.RISK_PROFILES = RISK_PROFILES;
+
+        // --- FUNCIONES UTILITARIAS ---
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
+        };
+
+        window.Card = (title, content, className = '') => {
+            return `
+                <div class="card ${className}">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">${title}</h3>
+                    ${content}
+                </div>
+            `;
+        };
+        
+        window.closeModal = () => {
+            document.getElementById('app-modal').classList.add('hidden');
+            document.querySelector('#app-modal button.bg-red-600')?.classList.remove('bg-red-600', 'hover:bg-red-700');
+            document.querySelector('#app-modal button.bg-red-600')?.classList.add('bg-blue-700', 'hover:bg-blue-800');
+            document.querySelector('#app-modal button.bg-blue-700').textContent = 'Aceptar';
+            document.querySelector('#app-modal button.bg-blue-700').onclick = window.closeModal;
+        };
+
+        window.showModal = (title, message) => {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('app-modal').classList.remove('hidden');
+            document.getElementById('app-modal').classList.add('flex');
+        };
+
+        window.updateCurrentView = () => {
+            const view = document.querySelector('#app-nav .active')?.dataset.view || 'Dashboard';
+            window.renderView(view);
+        };
+
+        // --- LÓGICA DE RENDERIZADO DE VISTAS ---
+
+        let expenseChart = null;
+        let portfolioChart = null;
+        let netWorthChart = null;
+
+        window.renderView = (viewName) => {
+            if (window.dataLoading && viewName !== 'Auth') {
+                document.getElementById('main-content-area').innerHTML = `
+                    <div class="flex justify-center items-center h-64">
+                        <div class="spinner border-blue-900 border-t-blue-300 w-10 h-10"></div>
+                        <p class="text-lg text-blue-900 ml-3 font-medium">Recuperando datos financieros...</p>
+                    </div>
+                `;
+                document.getElementById('current-view-title').textContent = 'Cargando...';
+                return;
+            }
+
+            // Actualizar estado de la barra lateral
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active', 'bg-blue-800');
+                if (item.dataset.view === viewName) {
+                    item.classList.add('active', 'bg-blue-800');
+                }
+            });
+
+            const contentArea = document.getElementById('main-content-area');
+            let title = '';
+            let contentHTML = '';
+
+            if (expenseChart) expenseChart.destroy();
+            if (portfolioChart) portfolioChart.destroy();
+            if (netWorthChart) netWorthChart.destroy();
+
+            switch (viewName) {
+                case 'Dashboard':
+                    title = 'Dashboard: Resumen Ejecutivo y Métricas de Rendimiento';
+                    contentHTML = renderDashboard();
+                    break;
+                case 'Transactions':
+                    title = 'Análisis de Flujo de Efectivo: Registro y Detalle de Transacciones';
+                    contentHTML = renderTransactions();
+                    break;
+                case 'Portfolio':
+                    title = 'Gestión de Activos: Estructura del Portafolio y Riesgo';
+                    contentHTML = renderPortfolio();
+                    break;
+                default:
+                    title = 'Dashboard: Resumen Ejecutivo y Métricas de Rendimiento';
+                    contentHTML = renderDashboard();
+            }
+
+            document.getElementById('current-view-title').textContent = title;
+            contentArea.innerHTML = contentHTML;
+
+            if (viewName === 'Dashboard') {
+                setTimeout(() => {
+                    initializeExpenseChart();
+                    initializeNetWorthChart();
+                }, 100); 
+            } else if (viewName === 'Portfolio') {
+                setTimeout(initializePortfolioChart, 100);
+            }
+        };
+
+        window.renderAuthView = () => {
+            document.getElementById('current-view-title').textContent = 'Autenticación del Sistema';
+        };
+
+        // --- 1. DASHBOARD VIEW ---
+
+        const calculateDashboardMetrics = () => {
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let transactionsByMonth = {};
+
+            window.transactions.forEach(t => {
+                const amount = t.amount || 0;
+                const monthYear = new Date(t.date).toISOString().substring(0, 7); // YYYY-MM
+                
+                if (!transactionsByMonth[monthYear]) {
+                    transactionsByMonth[monthYear] = { income: 0, expense: 0 };
+                }
+
+                if (t.type === 'Ingreso') {
+                    totalIncome += amount;
+                    transactionsByMonth[monthYear].income += amount;
+                } else {
+                    totalExpense += amount;
+                    transactionsByMonth[monthYear].expense += amount;
+                }
+            });
+
+            const sortedMonths = Object.keys(transactionsByMonth).sort();
+            let runningNetWorth = 0;
+            const netWorthData = [];
+            
+            sortedMonths.forEach(month => {
+                runningNetWorth += transactionsByMonth[month].income - transactionsByMonth[month].expense;
+                netWorthData.push({ month, netWorth: runningNetWorth });
+            });
+            
+            const portfolioValue = window.portfolio?.assets?.reduce((sum, a) => sum + (a.value || 0), 0) || 0;
+            const currentNetWorth = runningNetWorth + portfolioValue;
+
+            const threeMonthsAgo = new Date();
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+            const recentExpenses = window.transactions.filter(t => t.type === 'Gasto' && new Date(t.date) >= threeMonthsAgo);
+            const expenseDistribution = recentExpenses.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+
+            const totalRecentExpense = recentExpenses.reduce((sum, t) => sum + t.amount, 0);
+            const savingsRatio = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+            const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
+            
+            return {
+                totalIncome, totalExpense, currentNetWorth, savingsRatio, expenseRatio,
+                expenseDistribution, netWorthData, totalRecentExpense, portfolioValue
+            };
+        };
+
+        const renderDashboard = () => {
+            const metrics = calculateDashboardMetrics();
+
+            const netChange = metrics.totalIncome - metrics.totalExpense;
+            const netChangeColor = netChange >= 0 ? 'text-green-600' : 'text-red-600';
+            const savingsBadge = metrics.savingsRatio >= 15 ? 'bg-green-100 text-green-800 border-green-400' : (metrics.savingsRatio >= 0 ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : 'bg-red-100 text-red-800 border-red-400');
+
+            const dashboardContent = `
+                <!-- Fila de Indicadores Clave de Rendimiento (KPIs) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    ${Card('Patrimonio Neto Consolidado', `<p class="text-4xl font-extrabold text-blue-800">${formatCurrency(metrics.currentNetWorth)}</p>`, 'border-t-4 border-blue-500')}
+                    ${Card('Flujo de Ingresos Total', `<p class="text-3xl font-bold text-green-600">${formatCurrency(metrics.totalIncome)}</p>`, 'border-t-4 border-green-500')}
+                    ${Card('Egresos Operacionales Total', `<p class="text-3xl font-bold text-red-600">${formatCurrency(metrics.totalExpense)}</p>`, 'border-t-4 border-red-500')}
+                    ${Card('Superávit/Déficit (Neto)', `<p class="text-3xl font-bold ${netChangeColor}">${formatCurrency(netChange)}</p>`, `border-t-4 ${netChange >= 0 ? 'border-green-500' : 'border-red-500'}`)}
+                </div>
+
+                <!-- Fila de Análisis Gráfico -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    ${Card('Distribución de Egresos (Último Trimestre)', `
+                        <div class="h-72">
+                            ${metrics.totalRecentExpense > 0 ? '<canvas id="expense-chart"></canvas>' : '<p class="text-gray-500 italic text-center pt-8">Sin egresos recientes para segmentar.</p>'}
+                        </div>
+                    `, 'lg:col-span-1')}
+                    
+                    ${Card('Proyección Histórica del Patrimonio', `
+                        <div class="h-72">
+                            ${metrics.netWorthData.length > 1 ? '<canvas id="net-worth-chart"></canvas>' : '<p class="text-gray-500 italic text-center pt-8">Datos insuficientes para la proyección.</p>'}
+                        </div>
+                    `, 'lg:col-span-2')}
+                </div>
+
+                <!-- Fila de Ratios Financieros y Activos -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    ${Card('Ratio de Ahorro Neto', `
+                        <p class="text-4xl font-extrabold ${savingsBadge} inline-block px-4 py-2 rounded-lg border-2">${metrics.savingsRatio.toFixed(1)}%</p>
+                        <p class="text-sm text-gray-500 mt-2">Indicador clave de salud financiera. (Meta Sugerida: >15%)</p>
+                    `)}
+                    ${Card('Ratio de Gasto Operacional', `
+                        <p class="text-4xl font-extrabold text-blue-800">${metrics.expenseRatio.toFixed(1)}%</p>
+                        <p class="text-sm text-gray-500 mt-2">Porcentaje de ingresos destinado a gastos.</p>
+                    `)}
+                    ${Card('Valorización del Portafolio', `
+                        <p class="text-4xl font-extrabold text-blue-800">${formatCurrency(metrics.portfolioValue)}</p>
+                        <p class="text-sm text-gray-500 mt-2">Valoración actual de los activos en inversión.</p>
+                    `)}
+                </div>
+            `;
+            return dashboardContent;
+        };
+
+        const initializeExpenseChart = () => {
+            const metrics = calculateDashboardMetrics();
+            const canvas = document.getElementById('expense-chart');
+            if (!canvas || metrics.totalRecentExpense === 0) return;
+
+            const labels = Object.keys(metrics.expenseDistribution);
+            const dataValues = Object.values(metrics.expenseDistribution);
+            const backgroundColors = labels.map(label => CATEGORIES[label]?.color || CATEGORIES.Otros.color);
+
+            expenseChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: backgroundColors,
+                        hoverOffset: 16,
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { padding: 20, usePointStyle: true, font: { family: 'Inter' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed;
+                                    const percentage = metrics.totalRecentExpense > 0 ? ((value / metrics.totalRecentExpense) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                },
+            });
+        };
+        
+        const initializeNetWorthChart = () => {
+            const metrics = calculateDashboardMetrics();
+            const canvas = document.getElementById('net-worth-chart');
+            if (!canvas || metrics.netWorthData.length < 2) return;
+
+            const labels = metrics.netWorthData.map(d => d.month);
+            const dataValues = metrics.netWorthData.map(d => d.netWorth);
+
+            netWorthChart = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Patrimonio Neto Acumulado',
+                        data: dataValues,
+                        borderColor: '#1e3a8a', // Azul corporativo
+                        backgroundColor: 'rgba(30, 58, 138, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#1e3a8a',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { ticks: { callback: (value) => formatCurrency(value) } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
+                            }
+                        }
+                    }
+                },
+            });
+        };
+
+
+        // --- 2. TRANSACTIONS VIEW ---
+
+        const renderTransactions = () => {
+            const sortedTransactions = [...window.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const totalTransactions = sortedTransactions.length;
+            
+            const transactionSchema = [
+                { key: 'date', header: 'Fecha', format: (d) => new Date(d).toLocaleDateString() },
+                { key: 'type', header: 'Tipo' },
+                { key: 'category', header: 'Categoría' },
+                { key: 'description', header: 'Detalle' },
+                { key: 'amount', header: 'Monto' },
+            ];
+
+            const formHTML = `
+                <form id="add-transaction-form" class="grid grid-cols-1 sm:grid-cols-6 gap-4" onsubmit="window.handleTransactionSubmit(event)">
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
+                        <select id="transaction-type" onchange="window.updateTransactionButton(this.value)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 font-medium focus:border-blue-500 focus:ring-blue-500">
+                            <option value="Ingreso">Ingreso (Crédito)</option>
+                            <option value="Gasto">Gasto (Débito)</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Valor (CLP)</label>
+                        <input type="number" id="transaction-amount" placeholder="Ej: 150000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" required min="0.01" step="0.01">
+                    </div>
+                    
+                    <div class="sm:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Fecha de Registro</label>
+                        <input type="date" id="transaction-date" value="${new Date().toISOString().substring(0, 10)}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" required>
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Clasificación (Categoría)</label>
+                        <select id="transaction-category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" required>
+                            ${Object.keys(CATEGORIES).map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Detalle Operacional (Referencia)</label>
+                        <input type="text" id="transaction-description" placeholder="Descripción breve" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:border-blue-500 focus:ring-blue-500" maxlength="100">
+                    </div>
+
+                    <div class="sm:col-span-6 flex justify-end">
+                        <button type="submit" id="submit-transaction-btn" class="w-full sm:w-auto px-6 py-2 rounded-lg text-white font-semibold transition-colors duration-200 bg-red-600 hover:bg-red-700">
+                            Registrar Gasto
+                        </button>
+                    </div>
+                </form>
+            `;
+
+            const tableHTML = `
+                ${totalTransactions === 0 ? '<p class="text-gray-500 italic">No se han registrado operaciones financieras.</p>' : `
+                    <div class="min-w-full overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    ${transactionSchema.map(col => `<th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">${col.header}</th>`).join('')}
+                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${sortedTransactions.slice(0, 10).map(t => {
+                                    const isIncome = t.type === 'Ingreso';
+                                    const amountClass = isIncome ? 'text-green-600' : 'text-red-600';
+                                    const typeBadge = isIncome ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200';
+                                    const CatIcon = getIcon(CATEGORIES[t.category]?.icon || 'CreditCard', 'w-4 h-4 mr-1 text-gray-500');
+
+                                    return `
+                                        <tr class="hover:bg-blue-50">
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${new Date(t.date).toLocaleDateString()}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm"><span class="px-2 py-1 rounded-full text-xs font-medium ${typeBadge}">${t.type}</span></td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm flex items-center">${CatIcon} ${t.category}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 truncate max-w-xs">${t.description || 'N/A'}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-extrabold ${amountClass}">${isIncome ? '+' : '-'}${formatCurrency(t.amount)}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                                <button onclick="window.confirmDeleteTransaction('${t.id}')" class="text-red-500 hover:text-red-700 font-medium text-sm">Eliminar</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                        <p class="text-right text-sm text-gray-500 mt-2">Visualizando las ${Math.min(10, totalTransactions)} transacciones recientes de ${totalTransactions} registradas.</p>
+                    </div>
+                `}
+            `;
+
+            return `
+                <div class="space-y-8">
+                    ${window.Card('Módulo de Registro de Flujo', formHTML)}
+                    ${window.Card('Historial Detallado de Operaciones', tableHTML, 'overflow-x-auto')}
+                </div>
+            `;
+        };
+
+        window.updateTransactionButton = (type) => {
+            const btn = document.getElementById('submit-transaction-btn');
+            btn.textContent = `Registrar ${type === 'Ingreso' ? 'Ingreso' : 'Gasto'}`;
+            if (type === 'Ingreso') {
+                btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }
+        };
+
+        window.handleTransactionSubmit = (event) => {
+            event.preventDefault();
+            const type = document.getElementById('transaction-type').value;
+            const amount = parseFloat(document.getElementById('transaction-amount').value);
+            const category = document.getElementById('transaction-category').value;
+            const description = document.getElementById('transaction-description').value;
+            const date = document.getElementById('transaction-date').value;
+
+            if (isNaN(amount) || amount <= 0) {
+                window.showModal('Validación de Datos', 'El monto debe ser un valor numérico positivo.');
+                return;
+            }
+
+            const transactionData = { type, amount, category, description, date };
+            window.addTransaction(transactionData);
+        };
+        
+        window.confirmDeleteTransaction = (id) => {
+            window.showModal('Confirmación de Eliminación', '¿Confirma la eliminación de esta transacción? El proceso es irreversible.');
+            
+            const acceptBtn = document.querySelector('#app-modal button.bg-blue-700');
+            acceptBtn.textContent = 'Confirmar Eliminar';
+            acceptBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+            acceptBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            
+            acceptBtn.onclick = () => {
+                window.deleteTransaction(id);
+                window.closeModal();
+            };
+        };
+
+        // --- 3. PORTFOLIO VIEW ---
+
+        const renderPortfolio = () => {
+            const currentPortfolio = window.portfolio || RISK_PROFILES.Moderado;
+            const riskProfile = currentPortfolio.riskProfile || 'Moderado';
+            const riskInfo = RISK_PROFILES[riskProfile];
+            const assets = currentPortfolio.assets || [];
+            const totalValue = assets.reduce((sum, a) => sum + (a.value || 0), 0);
+            
+            const recommendationData = riskInfo.allocation;
+            
+            // Renderizar la tabla de activos (editable)
+            const assetsTable = `
+                <table class="min-w-full divide-y divide-gray-200 mt-4">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Clase de Activo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor de Mercado</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Ponderación (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-table-body" class="bg-white divide-y divide-gray-200">
+                        ${assets.map((asset, index) => {
+                            const percentage = totalValue > 0 ? ((asset.value / totalValue) * 100).toFixed(1) : 0;
+                            return `
+                                <tr data-index="${index}">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${asset.type}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                        <input type="number" data-field="value" value="${asset.value}" 
+                                               onchange="window.updateAssetValue(this, ${index})" 
+                                               class="w-32 p-1 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500">
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-semibold">${percentage}%</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-gray-50 border-t border-gray-300">
+                            <td class="px-4 py-3 font-bold text-base text-gray-800">Total Consolidado</td>
+                            <td id="portfolio-total-value" class="px-4 py-3 font-bold text-base text-blue-800">${formatCurrency(totalValue)}</td>
+                            <td class="px-4 py-3 font-bold text-base text-gray-800">100.0%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <button onclick="window.handlePortfolioUpdate()" class="mt-4 px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                    Actualizar Cartera de Activos
+                </button>
+            `;
+
+            // Renderizar la tabla de asignación recomendada
+            const recommendedAllocationTable = `
+                <p class="text-sm text-gray-600 mb-3 font-medium">Asignación teórica para el perfil ${riskProfile} de riesgo:</p>
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Clase de Activo</th>
+                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Asignación Requerida (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${recommendationData.map(asset => `
+                            <tr>
+                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 flex items-center">
+                                    <span class="inline-block w-3 h-3 rounded-full mr-2" style="background-color: ${asset.color}"></span>
+                                    ${asset.type}
+                                </td>
+                                <td class="px-4 py-2 whitespace-nowrap text-sm font-bold text-blue-600">${asset.percentage}%</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            return `
+                <div class="space-y-8">
+                    <!-- Sección de Perfil de Riesgo -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        ${window.Card('Definición del Perfil de Riesgo', `
+                            <p class="text-sm text-gray-600 mb-4">Ajuste su perfil de riesgo para alinear las recomendaciones de asignación de activos.</p>
+                            <select id="risk-profile-select" onchange="window.handleRiskProfileChange(this.value)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 text-lg font-semibold focus:border-blue-500 focus:ring-blue-500">
+                                ${Object.keys(RISK_PROFILES).map(key => `<option value="${key}" ${key === riskProfile ? 'selected' : ''}>${key}</option>`).join('')}
+                            </select>
+                            <div id="risk-profile-description" class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-600 text-blue-800 rounded-lg text-sm font-medium">
+                                ${riskInfo.description}
+                            </div>
+                            <button onclick="window.saveRiskProfile()" class="mt-4 px-6 py-2 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors">
+                                Guardar Perfil de Riesgo
+                            </button>
+                        `, 'lg:col-span-1')}
+
+                        ${window.Card('Composición Actual vs. Ideal', `
+                            <div class="h-72">
+                                <canvas id="portfolio-chart"></canvas>
+                            </div>
+                        `, 'lg:col-span-2')}
+                    </div>
+
+                    <!-- Sección de Activos y Recomendaciones -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        ${window.Card('Desglose Valorizado de Activos', assetsTable)}
+                        ${window.Card('Recomendación de Asignación por Riesgo', recommendedAllocationTable)}
+                    </div>
+                </div>
+            `;
+        };
+        
+        window.handleRiskProfileChange = (newProfile) => {
+            const description = RISK_PROFILES[newProfile].description;
+            document.getElementById('risk-profile-description').textContent = description;
+            document.getElementById('risk-profile-description').className = 'mt-4 p-4 bg-blue-50 border-l-4 border-blue-600 text-blue-800 rounded-lg text-sm font-medium';
+        };
+        
+        window.saveRiskProfile = () => {
+            const newProfile = document.getElementById('risk-profile-select').value;
+            const currentPortfolio = window.portfolio || {};
+            
+            window.updatePortfolio({
+                ...currentPortfolio,
+                riskProfile: newProfile,
+            });
+        };
+
+        window.updateAssetValue = (inputElement, index) => {
+            const newAssets = [...(window.portfolio.assets || [])];
+            newAssets[index].value = parseFloat(inputElement.value) || 0;
+            window.portfolio.assets = newAssets;
+
+            // Recalcular y actualizar totales en la tabla temporalmente
+            const totalValue = newAssets.reduce((sum, a) => sum + (a.value || 0), 0);
+            document.getElementById('portfolio-total-value').textContent = formatCurrency(totalValue);
+            
+            // Actualizar porcentajes
+            const rows = document.getElementById('assets-table-body').querySelectorAll('tr');
+            rows.forEach((row, idx) => {
+                const percentCell = row.cells[2];
+                const percentage = totalValue > 0 ? ((newAssets[idx].value / totalValue) * 100).toFixed(1) : 0;
+                percentCell.textContent = `${percentage}%`;
+            });
+        };
+
+        window.handlePortfolioUpdate = () => {
+            if (!window.portfolio || !window.portfolio.assets) {
+                window.showModal('Error Crítico', 'No se encontraron datos de portafolio para iniciar la actualización.');
+                return;
+            }
+
+            const assetsToSave = window.portfolio.assets.map(a => ({
+                type: a.type,
+                value: parseFloat(a.value) || 0
+            }));
+
+            window.updatePortfolio({
+                ...window.portfolio,
+                assets: assetsToSave
+            });
+        };
+
+        const initializePortfolioChart = () => {
+            const currentPortfolio = window.portfolio || RISK_PROFILES.Moderado;
+            const assets = currentPortfolio.assets || [];
+            const totalValue = assets.reduce((sum, a) => sum + (a.value || 0), 0);
+            const canvas = document.getElementById('portfolio-chart');
+            if (!canvas || totalValue === 0) return;
+
+            const activeAssets = assets.filter(a => a.value > 0);
+            const labels = activeAssets.map(a => a.type);
+            const dataValues = activeAssets.map(a => a.value);
+            
+            const backgroundColors = [
+                '#2196F3', '#4CAF50', '#FF9800', '#F44336', '#795548', '#9C27B0'
+            ];
+
+            portfolioChart = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valor de Mercado',
+                        data: dataValues,
+                        backgroundColor: backgroundColors.slice(0, labels.length),
+                        hoverOffset: 16,
+                        borderWidth: 0,
+                    }, {
+                        // Datos para la asignación ideal (como anillo externo, si fuera un donut)
+                        // Para el ejemplo formal, mantendremos solo el pie para la composición actual.
+                        // Alternativamente, se podría usar un gráfico de barras apiladas para Actual vs. Ideal.
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { padding: 20, usePointStyle: true, font: { family: 'Inter' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed;
+                                    const percentage = totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                },
+            });
+        };
+        
+        // --- LÓGICA MÓVIL ---
+        document.getElementById('mobile-menu-button').addEventListener('click', () => {
+            const nav = document.getElementById('app-nav');
+            const isHidden = nav.classList.contains('hidden');
+            if (isHidden) {
+                nav.classList.remove('hidden');
+                nav.classList.add('block', 'space-y-2');
+            } else {
+                nav.classList.remove('block', 'space-y-2');
+                nav.classList.add('hidden');
+            }
+        });
+
+    </script>
+</body>
+</html>
