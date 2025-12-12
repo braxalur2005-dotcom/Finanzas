@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanzasControl - Gestor de Finanzas Personales</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            outline: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+        
+        .user-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        input[type="text"], input[type="email"], input[type="password"], 
+        input[type="number"], select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tabs button {
+            padding: 12px 20px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .nav-tabs button.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metric {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .metric h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .metric .value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .risk-option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .risk-option:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .risk-option.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .nav-tabs button {
+                min-width: 100%;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen (Después del loginContainer) -->
+    <div id="welcomeContainer" class="card" style="display: none; text-align: center; padding: 60px 20px;">
+        <div style="font-size: 80px; margin-bottom: 30px;">😊</div>
+        <h2 style="color: #667eea; margin-bottom: 20px; font-size: 32px;">¡BIENVENIDO!</h2>
+        <h3 style="color: #333; margin-bottom: 30px; font-size: 24px;">GRACIAS <span id="welcomeUsername" style="color: #667eea;"></span><br>NO TE FALLAREMOS</h3>
+        <button onclick="irAlDashboard()" style="padding: 15px 40px; font-size: 16px;">Continuar</button>
+    </div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💰 FinanzasControl</h1>
+            <div class="user-section">
+                <span id="usuarioActual" style="color: #667eea; font-weight: bold;"></span>
+                <button onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Login/Register (Oculto inicialmente) -->
+        <div id="loginContainer" class="card">
+            <h2 style="margin-bottom: 20px;">Bienvenido a FinanzasControl</h2>
+            <div class="form-row">
+                <div>
+                    <h3>Iniciar Sesión</h3>
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" id="loginUsername" placeholder="Tu usuario">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="loginPassword" placeholder="Tu contraseña">
+                    </div>
+                    <button onclick="iniciarSesion()" style="width: 100%;">Iniciar Sesión</button>
+                </div>
+                <div>
+                    <h3>Registrarse</h3>
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" id="regUsername" placeholder="Nuevo usuario">
+                    </div>
+                    <div class="form-group">
+                        <label>Contraseña</label>
+                        <input type="password" id="regPassword" placeholder="Nueva contraseña">
+                    </div>
+                    <button onclick="registrarse()" style="width: 100%;">Registrarse</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App (Oculto hasta login) -->
+        <div id="appContainer" style="display: none;">
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <button onclick="cambiarTab('dashboard')" class="active">📊 Dashboard</button>
+                <button onclick="cambiarTab('gastos')">💸 Gastos</button>
+                <button onclick="cambiarTab('ingresos')">💵 Ingresos</button>
+                <button onclick="cambiarTab('salud')">❤️ Salud Financiera</button>
+                <button onclick="cambiarTab('portafolio')">📈 Portafolio</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2 style="margin-bottom: 20px;">Dashboard Principal</h2>
+                <div class="grid">
+                    <div class="metric">
+                        <h3>Ingresos Totales</h3>
+                        <div class="value">$<span id="ingresosTotalDash">0</span></div>
+                    </div>
+                    <div class="metric">
+                        <h3>Gastos Totales</h3>
+                        <div class="value">$<span id="gastosTotalDash">0</span></div>
+                    </div>
+                    <div class="metric">
+                        <h3>Balance</h3>
+                        <div class="value">$<span id="balanceDash">0</span></div>
+                    </div>
+                    <div class="metric">
+                        <h3>Ratio Ahorro</h3>
+                        <div class="value"><span id="ratioAhorroDash">0</span>%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Gastos por Categoría</h3>
+                    <div class="chart-container">
+                        <canvas id="chartCategories"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Evolución Mensual</h3>
+                    <div class="chart-container">
+                        <canvas id="chartEvolution"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Proyección Portafolio (20 años)</h3>
+                    <div class="chart-container">
+                        <canvas id="chartProyection"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gastos Tab -->
+            <div id="gastos" class="tab-content">
+                <div class="card">
+                    <h2 style="margin-bottom: 20px;">Registro de Gastos</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            <select id="categoriaGasto">
+                                <option value="Alimentación">Alimentación</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Utilities">Utilities</option>
+                                <option value="Entrenamiento">Entrenamiento</option>
+                                <option value="Diversión">Diversión</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Monto</label>
+                            <input type="number" id="montoGasto" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción</label>
+                            <input type="text" id="descGasto" placeholder="Descripción">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" id="fechaGasto">
+                        </div>
+                    </div>
+                    <button onclick="agregarGasto()" style="width: 100%;">Agregar Gasto</button>
+                </div>
+
+                <div class="card">
+                    <h3>Historial de Gastos</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gastosTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Ingresos Tab -->
+            <div id="ingresos" class="tab-content">
+                <div class="card">
+                    <h2 style="margin-bottom: 20px;">Registro de Ingresos</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fuente</label>
+                            <input type="text" id="fuenteIngreso" placeholder="Ej: Salario, Freelance">
+                        </div>
+                        <div class="form-group">
+                            <label>Monto</label>
+                            <input type="number" id="montoIngreso" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha</label>
+                            <input type="date" id="fechaIngreso">
+                        </div>
+                    </div>
+                    <button onclick="agregarIngreso()" style="width: 100%;">Agregar Ingreso</button>
+                </div>
+
+                <div class="card">
+                    <h3>Historial de Ingresos</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fuente</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingresosTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Salud Financiera Tab -->
+            <div id="salud" class="tab-content">
+                <h2 style="margin-bottom: 20px;">Panel de Salud Financiera</h2>
+                
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Indicadores Clave</h3>
+                    <div class="grid">
+                        <div class="metric">
+                            <h3>Ratio de Ahorro</h3>
+                            <div class="value"><span id="ratioAhorro">0</span>%</div>
+                            <p style="margin-top: 10px; opacity: 0.9;">Ideal: 20% o más</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Ratio Endeudamiento</h3>
+                            <div class="value"><span id="ratioEndeudamiento">0</span>%</div>
+                            <p style="margin-top: 10px; opacity: 0.9;">Ideal: Menos del 40%</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Fondo Emergencia</h3>
+                            <div class="value"><span id="fondoEmergencia">0</span> meses</div>
+                            <p style="margin-top: 10px; opacity: 0.9;">Ideal: 3-6 meses</p>
+                        </div>
+                        <div class="metric">
+                            <h3>Capacidad Inversión</h3>
+                            <div class="value">$<span id="capacidadInversion">0</span></div>
+                            <p style="margin-top: 10px; opacity: 0.9;">Disponible mensualmente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Información de Deudas y Ahorros</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Deuda Total</label>
+                            <input type="number" id="deudaTotal" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Ahorros Actuales</label>
+                            <input type="number" id="ahorrosActuales" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <button onclick="actualizarSalud()" style="width: 100%;">Actualizar Datos</button>
+                </div>
+
+                <div class="card">
+                    <h3>Análisis de Salud</h3>
+                    <div id="analisisSalud"></div>
+                </div>
+            </div>
+
+            <!-- Portafolio Tab -->
+            <div id="portafolio" class="tab-content">
+                <h2 style="margin-bottom: 20px;">Constructor de Portafolio de Inversión</h2>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">Selecciona tu Perfil de Riesgo</h3>
+                    <div class="grid">
+                        <div class="risk-option" onclick="seleccionarRiesgo('conservador')">
+                            <h4>🛡️ Conservador</h4>
+                            <p style="margin: 10px 0; color: #666;">60% Renta Fija</p>
+                            <p style="margin: 10px 0; color: #666;">40% Acciones</p>
+                            <p style="margin: 10px 0; font-weight: bold;">Retorno esperado: 5-6%</p>
+                        </div>
+                        <div class="risk-option" onclick="seleccionarRiesgo('moderado')">
+                            <h4>⚖️ Moderado</h4>
+                            <p style="margin: 10px 0; color: #666;">40% Renta Fija</p>
+                            <p style="margin: 10px 0; color: #666;">60% Acciones</p>
+                            <p style="margin: 10px 0; font-weight: bold;">Retorno esperado: 7-8%</p>
+                        </div>
+                        <div class="risk-option" onclick="seleccionarRiesgo('agresivo')">
+                            <h4>🚀 Agresivo</h4>
+                            <p style="margin: 10px 0; color: #666;">20% Renta Fija</p>
+                            <p style="margin: 10px 0; color: #666;">80% Acciones</p>
+                            <p style="margin: 10px 0; font-weight: bold;">Retorno esperado: 10-12%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 15px;">Configuración de Inversión</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Inversión Inicial</label>
+                            <input type="number" id="inversionInicial" placeholder="0.00" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Aporte Mensual</label>
+                            <input type="number" id="aporteMensual" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <button onclick="calcularProyecciones()" style="width: 100%;">Calcular Proyecciones</button>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">Asignación de Portafolio</h3>
+                    <div class="chart-container">
+                        <canvas id="chartAsignacion"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 20px;">Proyecciones de Crecimiento</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Años</th>
+                                <th>Conservador (5-6%)</th>
+                                <th>Moderado (7-8%)</th>
+                                <th>Agresivo (10-12%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="proyeccionesTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let usuarioActual = null;
+        let usuarios = JSON.parse(localStorage.getItem('usuarios')) || {};
+        let riesgoSeleccionado = 'moderado';
+
+        // Establecer fecha actual por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaGasto').value = hoy;
+            document.getElementById('fechaIngreso').value = hoy;
+            verificarSesion();
+        });
+
+        // Funciones de Autenticación
+        function registrarse() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!username || !password) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            if (usuarios[username]) {
+                alert('El usuario ya existe');
+                return;
+            }
+
+            usuarios[username] = {
+                password: password,
+                gastos: [],
+                ingresos: [],
+                deuda: 0,
+                ahorros: 0
+            };
+
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            alert('Registro exitoso. Ahora inicia sesión');
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+        }
+
+        function iniciarSesion() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            if (!usuarios[username] || usuarios[username].password !== password) {
+                alert('Usuario o contraseña incorrectos');
+                return;
+            }
+
+            usuarioActual = username;
+            localStorage.setItem('usuarioActual', username);
+            mostrarApp();
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function cerrarSesion() {
+            usuarioActual = null;
+            localStorage.removeItem('usuarioActual');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function verificarSesion() {
+            usuarioActual = localStorage.getItem('usuarioActual');
+            if (usuarioActual && usuarios[usuarioActual]) {
+                mostrarApp();
+            }
+        }
+
+        function mostrarApp() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('usuarioActual').textContent = `Usuario: ${usuarioActual}`;
+            actualizarDashboard();
+            renderizarTablas();
+            actualizarSaludDisplay();
+        }
+
+        // Funciones de Gastos
+        function agregarGasto() {
+            const categoria = document.getElementById('categoriaGasto').value;
+            const monto = parseFloat(document.getElementById('montoGasto').value);
+            const descripcion = document.getElementById('descGasto').value;
+            const fecha = document.getElementById('fechaGasto').value;
+
+            if (!monto || !fecha) {
+                alert('Por favor completa los campos requeridos');
+                return;
+            }
+
+            usuarios[usuarioActual].gastos.push({
+                categoria, monto, descripcion, fecha
+            });
+
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            document.getElementById('montoGasto').value = '';
+            document.getElementById('descGasto').value = '';
+
+            renderizarTablas();
+            actualizarDashboard();
+            actualizarSaludDisplay();
+        }
+
+        function eliminarGasto(index) {
+            usuarios[usuarioActual].gastos.splice(index, 1);
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            renderizarTablas();
+            actualizarDashboard();
+            actualizarSaludDisplay();
+        }
+
+        // Funciones de Ingresos
+        function agregarIngreso() {
+            const fuente = document.getElementById('fuenteIngreso').value;
+            const monto = parseFloat(document.getElementById('montoIngreso').value);
+            const fecha = document.getElementById('fechaIngreso').value;
+
+            if (!fuente || !monto || !fecha) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            usuarios[usuarioActual].ingresos.push({
+                fuente, monto, fecha
+            });
+
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            document.getElementById('fuenteIngreso').value = '';
+            document.getElementById('montoIngreso').value = '';
+
+            renderizarTablas();
+            actualizarDashboard();
+            actualizarSaludDisplay();
+        }
+
+        function eliminarIngreso(index) {
+            usuarios[usuarioActual].ingresos.splice(index, 1);
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            renderizarTablas();
+            actualizarDashboard();
+            actualizarSaludDisplay();
+        }
+
+        function renderizarTablas() {
+            // Tabla gastos
+            const gastosHTML = usuarios[usuarioActual].gastos.map((gasto, i) => `
+                <tr>
+                    <td>${gasto.categoria}</td>
+                    <td>${gasto.descripcion}</td>
+                    <td>$${gasto.monto.toFixed(2)}</td>
+                    <td>${gasto.fecha}</td>
+                    <td><button class="delete-btn" onclick="eliminarGasto(${i})">Eliminar</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('gastosTable').innerHTML = gastosHTML;
+
+            // Tabla ingresos
+            const ingresosHTML = usuarios[usuarioActual].ingresos.map((ingreso, i) => `
+                <tr>
+                    <td>${ingreso.fuente}</td>
+                    <td>$${ingreso.monto.toFixed(2)}</td>
+                    <td>${ingreso.fecha}</td>
+                    <td><button class="delete-btn" onclick="eliminarIngreso(${i})">Eliminar</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('ingresosTable').innerHTML = ingresosHTML;
+        }
+
+        function getTotalGastos() {
+            return usuarios[usuarioActual].gastos.reduce((sum, g) => sum + g.monto, 0);
+        }
+
+        function getTotalIngresos() {
+            return usuarios[usuarioActual].ingresos.reduce((sum, i) => sum + i.monto, 0);
+        }
+
+        function actualizarDashboard() {
+            const totalIngresos = getTotalIngresos();
+            const totalGastos = getTotalGastos();
+            const balance = totalIngresos - totalGastos;
+            const ratioAhorro = totalIngresos > 0 ? ((totalIngresos - totalGastos) / totalIngresos * 100) : 0;
+
+            document.getElementById('ingresosTotalDash').textContent = totalIngresos.toFixed(2);
+            document.getElementById('gastosTotalDash').textContent = totalGastos.toFixed(2);
+            document.getElementById('balanceDash').textContent = balance.toFixed(2);
+            document.getElementById('ratioAhorroDash').textContent = ratioAhorro.toFixed(1);
+
+            crearGraficos();
+        }
+
+        // Funciones Salud Financiera
+        function actualizarSalud() {
+            const deuda = parseFloat(document.getElementById('deudaTotal').value) || 0;
+            const ahorros = parseFloat(document.getElementById('ahorrosActuales').value) || 0;
+
+            usuarios[usuarioActual].deuda = deuda;
+            usuarios[usuarioActual].ahorros = ahorros;
+
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            actualizarSaludDisplay();
+        }
+
+        function actualizarSaludDisplay() {
+            const totalIngresos = getTotalIngresos();
+            const totalGastos = getTotalGastos();
+            const deuda = usuarios[usuarioActual].deuda || 0;
+            const ahorros = usuarios[usuarioActual].ahorros || 0;
+
+            const ratioAhorro = totalIngresos > 0 ? ((totalIngresos - totalGastos) / totalIngresos * 100) : 0;
+            const ratioEndeudamiento = totalIngresos > 0 ? (deuda / totalIngresos * 100) : 0;
+            const fondoEmergencia = totalGastos > 0 ? (ahorros / (totalGastos / 12)) : 0;
+            const capacidadInversion = Math.max(totalIngresos - totalGastos, 0);
+
+            document.getElementById('ratioAhorro').textContent = ratioAhorro.toFixed(1);
+            document.getElementById('ratioEndeudamiento').textContent = ratioEndeudamiento.toFixed(1);
+            document.getElementById('fondoEmergencia').textContent = fondoEmergencia.toFixed(1);
+            document.getElementById('capacidadInversion').textContent = capacidadInversion.toFixed(2);
+
+            // Análisis
+            let analisis = '<div class="alert alert-success"><strong>Análisis:</strong> ';
+            
+            if (ratioAhorro >= 20) {
+                analisis += '✓ Excelente ratio de ahorro. ';
+            } else {
+                analisis += '⚠️ Aumenta tu ahorro. ';
+            }
+
+            if (ratioEndeudamiento <= 40) {
+                analisis += '✓ Deuda controlada. ';
+            } else {
+                analisis += '⚠️ Reduce tu deuda. ';
+            }
+
+            if (fondoEmergencia >= 3) {
+                analisis += '✓ Fondo de emergencia adecuado. ';
+            } else {
+                analisis += '⚠️ Construye tu fondo de emergencia. ';
+            }
+
+            analisis += '</div>';
+            document.getElementById('analisisSalud').innerHTML = analisis;
+        }
+
+        // Funciones Portafolio
+        function seleccionarRiesgo(riesgo) {
+            riesgoSeleccionado = riesgo;
+            document.querySelectorAll('.risk-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.risk-option').classList.add('selected');
+        }
+
+        function calcularProyecciones() {
+            const inversionInicial = parseFloat(document.getElementById('inversionInicial').value) || 0;
+            const aporteMensual = parseFloat(document.getElementById('aporteMensual').value) || 0;
+
+            const tasas = {
+                conservador: 0.06,
+                moderado: 0.08,
+                agresivo: 0.11
+            };
+
+            const tasa = tasas[riesgoSeleccionado];
+            const periodos = [5, 10, 20];
+            let html = '';
+
+            periodos.forEach(años => {
+                let valorConservador = calcularValorFuturo(inversionInicial, aporteMensual, 0.055, años);
+                let valorModerado = calcularValorFuturo(inversionInicial, aporteMensual, 0.075, años);
+                let valorAgresivo = calcularValorFuturo(inversionInicial, aporteMensual, 0.11, años);
+
+                html += `
+                    <tr>
+                        <td><strong>${años} años</strong></td>
+                        <td>$${valorConservador.toFixed(2)}</td>
+                        <td>$${valorModerado.toFixed(2)}</td>
+                        <td>$${valorAgresivo.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('proyeccionesTable').innerHTML = html;
+            crearGraficos();
+        }
+
+        function calcularValorFuturo(inicial, aporteMensual, tasa, años) {
+            let valor = inicial;
+            const tasaMensual = tasa / 12;
+            
+            for (let mes = 0; mes < años * 12; mes++) {
+                valor = valor * (1 + tasaMensual) + aporteMensual;
+            }
+            
+            return valor;
+        }
+
+        // Gráficos
+        function crearGraficos() {
+            crearGraficoGastos();
+            crearGraficoEvolucion();
+            crearGraficoAsignacion();
+            crearGraficoProyeccion();
+        }
+
+        function crearGraficoGastos() {
+            const gastos = usuarios[usuarioActual].gastos;
+            const categorias = ['Alimentación', 'Transporte', 'Utilities', 'Entrenamiento', 'Diversión', 'Otros'];
+            const datos = categorias.map(cat => gastos.filter(g => g.categoria === cat).reduce((sum, g) => sum + g.monto, 0));
+
+            const ctx = document.getElementById('chartCategories');
+            if (window.chartCategories) window.chartCategories.destroy();
+            
+            window.chartCategories = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categorias,
+                    datasets: [{
+                        data: datos,
+                        backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#fa709a'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+        }
+
+        function crearGraficoEvolucion() {
+            const gastos = usuarios[usuarioActual].gastos;
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const datosGastos = meses.map((_, i) => {
+                const mes = String(i + 1).padStart(2, '0');
+                const año = new Date().getFullYear();
+                return gastos.filter(g => g.fecha.includes(`-${mes}-`)).reduce((sum, g) => sum + g.monto, 0);
+            });
+
+            const ctx = document.getElementById('chartEvolution');
+            if (window.chartEvolution) window.chartEvolution.destroy();
+            
+            window.chartEvolution = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Gastos Mensuales',
+                        data: datosGastos,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function crearGraficoAsignacion() {
+            const distribuciones = {
+                conservador: [60, 40],
+                moderado: [40, 60],
+                agresivo: [20, 80]
+            };
+
+            const distribucion = distribuciones[riesgoSeleccionado];
+            const ctx = document.getElementById('chartAsignacion');
+            if (window.chartAsignacion) window.chartAsignacion.destroy();
+            
+            window.chartAsignacion = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Renta Fija', 'Acciones'],
+                    datasets: [{
+                        data: distribucion,
+                        backgroundColor: ['#43e97b', '#fa709a'],
+                        borderColor: 'white',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function crearGraficoProyeccion() {
+            const inversionInicial = parseFloat(document.getElementById('inversionInicial').value) || 1000;
+            const aporteMensual = parseFloat(document.getElementById('aporteMensual').value) || 100;
+
+            const años = Array.from({length: 21}, (_, i) => i);
+            const datosConservador = años.map(año => calcularValorFuturo(inversionInicial, aporteMensual, 0.055, año));
+            const datosModerado = años.map(año => calcularValorFuturo(inversionInicial, aporteMensual, 0.075, año));
+            const datosAgresivo = años.map(año => calcularValorFuturo(inversionInicial, aporteMensual, 0.11, año));
+
+            const ctx = document.getElementById('chartProyection');
+            if (window.chartProyection) window.chartProyection.destroy();
+            
+            window.chartProyection = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: años,
+                    datasets: [
+                        {
+                            label: 'Conservador (5.5%)',
+                            data: datosConservador,
+                            borderColor: '#43e97b',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Moderado (7.5%)',
+                            data: datosModerado,
+                            borderColor: '#667eea',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Agresivo (11%)',
+                            data: datosAgresivo,
+                            borderColor: '#fa709a',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Navegación de tabs
+        function cambiarTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tabs button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tab === 'portafolio') {
+                setTimeout(() => crearGraficos(), 100);
+            }
+        }
+    </script>
+</body>
+</html>
